@@ -62,6 +62,5 @@ def selection(u, sel_input, sel_type=None):
         else :
             sel_string = sel_input
 
-    print(sel_string)
 
     return (u.select_atoms(sel_string))

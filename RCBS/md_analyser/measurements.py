@@ -52,7 +52,7 @@ def angle_bool_output(ang, ang1, ang2, mode='tol'):
 
 
 
-# DISTANCE AND DIHEDRAL ANGLES MEASURERS
+# DISTANCE, ANGLE AND DIHEDRAL ANGLES MEASURERS
 def dist_measure(sel1, sel2):
     """
         This function outputs the minimum measured distance between the two input selections.
@@ -73,6 +73,20 @@ def dihe_measure(sel1, sel2, sel3, sel4):
             raise NotSingleAtomSelectionError
 
     return ((float(rad2deg(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP')))) + 360) % 360
+
+def ang_measure(sel1, sel2, sel3):
+    """
+    This functions measures the angle between 3 specified atoms and returns the value between 0 and 360 degrees.
+    The input selections have to be single atoms.
+    """
+    from numpy import rad2deg
+
+    for sel in (sel1, sel2, sel3):
+        if len(sel) != 1:
+            raise NotSingleAtomSelectionError
+
+    return ((float(rad2deg(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP')))) + 360) % 360
+
 
 ######################
 

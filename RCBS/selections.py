@@ -14,7 +14,10 @@ def selection(u, sel_input, sel_type=None):
         none     -> pipes the selection command directly
     """
 
-    if isinstance(sel_input, list):
+    if sel_type == None:
+        sel_string = sel_input
+
+    elif isinstance(sel_input, list):
         if isinstance(sel_type, str):
             if sel_type.lower() == 'at_num':
                 sel_string = 'bynum ' + ' or bynum '.join(str(at) for at in sel_input)
@@ -59,8 +62,7 @@ def selection(u, sel_input, sel_type=None):
             sel_string = ' '.join(['resid', str(sel_input)])
         elif sel_type.lower() == 'res_name':
             sel_string = ' '.join(['resname',str(sel_input)])
-        else :
-            sel_string = sel_input
+
 
 
     return (u.select_atoms(sel_string))

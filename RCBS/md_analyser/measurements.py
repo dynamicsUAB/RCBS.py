@@ -9,7 +9,7 @@ def dist_bool_output(dist, dist1, dist2=0, mode='lim'):
     This function takes an input distance and the upper and lower limits or the central value and the tolerance and outputs
     if it satisfies or not the given criteria.
 
-    mode:
+    modes:
         lim -> limit mode, it requires a max and a min value
         tol -> tolerance mode, it requires a central value and a min and max value
     """
@@ -32,7 +32,7 @@ def angle_bool_output(ang, ang1, ang2, mode='tol'):
     All the input values are transformed into the (0, 360) degrees format.
     The input values have to be in degrees, not in radians. They can be transformed using the np.rad2dreg() method, for example.
 
-    mode:
+    modes:
         lim -> limit mode, it requires a max and a min value
         tol -> tolerance mode, it requires a central value and a min and max value
     """

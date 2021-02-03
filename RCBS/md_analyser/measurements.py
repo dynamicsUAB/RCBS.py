@@ -19,6 +19,7 @@ def dist_bool_output(dist, dist1, dist2=0, mode='lim'):
             d_max, d_min = dist1, dist2
         elif dist2 > dist1:
             d_max, d_min = dist2, dist1
+
     elif mode == 'tol':
         d_max = dist1 + dist2
         d_min = dist1 - dist2
@@ -44,6 +45,7 @@ def angle_bool_output(ang, ang1, ang2, mode='tol'):
             a_max, a_min = ang1, ang2
         elif ang2 > ang1:
             a_max, a_min = ang2, ang1
+
     elif mode == 'tol':
         a_max = ang1 + ang2
         a_min = ang1 - ang2

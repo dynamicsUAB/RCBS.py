@@ -10,8 +10,7 @@ input_files:
 
 
 calculation_features:
-  microiterative: no
-  #inner_residues:
+  microiterative: '568 568 456'
 
 theory:
   charge: 2

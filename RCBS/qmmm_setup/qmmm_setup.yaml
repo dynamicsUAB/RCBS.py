@@ -13,8 +13,7 @@ calculation_features:
   optimiser: lbgs
   coordinates: hdlc
   tolerance: 0.001
-  microiterative: no
-  inner_residues:
+  microiterative: 
 
 theory:
   software: turbomole

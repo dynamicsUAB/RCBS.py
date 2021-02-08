@@ -6,10 +6,11 @@ structure_saver = lambda sel, file_name, format: sel.write(file_name + format)
 def trajectory_frame_extractor(u, frame, name='', folder='', format='.pdb'):
     """
     DESCRIPTION:
-        Function for saving a frame from a trajectory loaded as a MDAnalyisis Universe
+        Function for saving a frame from a trajectory loaded as a MDAnalysis Universe
 
     INPUTS:
-        u       --> Universe. It has to be a trajectory.
+        u       --> MDAnalysis Universe
+                --> It has to be a trajectory.
         frame   --> it can be a single frame (input as number or string of number) or a list of frames.
         name    --> name for the output file. If more than one frame is input, outputs will be secuencially named
                 --> by default, output will be saved as pdb. All formats accepted by the write module of MDAnalysis are accepted.
@@ -41,7 +42,7 @@ def trajectory_frame_extractor(u, frame, name='', folder='', format='.pdb'):
             structure_saver(sel, file_name, format)
 
     if isinstance(frame, (str, int)):
-        u.trajectory[int(f)]
+        u.trajectory[int(frame)]
 
         if name == '':
             file_name = folder + str(frame)

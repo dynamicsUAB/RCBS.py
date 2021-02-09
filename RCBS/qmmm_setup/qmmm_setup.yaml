@@ -10,7 +10,7 @@ input_files:
 
 
 calculation_features:
-  optimiser: lbgs
+  optimiser: lbfgs
   coordinates: hdlc
   tolerance: 0.001
   microiterative: 

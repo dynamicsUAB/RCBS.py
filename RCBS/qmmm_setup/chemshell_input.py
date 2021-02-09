@@ -26,7 +26,7 @@ def yaml2dict(default_file, user_file):
     """
     Function which creates a dictionary from the user-input YAML completing the not defined keyword with the default configuration from the default YAML.
     """
-    
+
     qmmm_dict = yaml.safe_load(open(default_file))
     user_dict = yaml.safe_load(open(user_file))
 
@@ -48,9 +48,9 @@ def yaml2dict(default_file, user_file):
         if keys[i] in ('calculations_features', 'theory'):
             keys_ = list(user_dict[keys[i]].keys())
 
-            for j in range(len(keys_)):
+            for key in range(len(keys_)):
                 if keys_ == 'optimiser' and qmmm_dict[keys[i]][keys_[j]] not in ('lbfgs', 'prfo', 'dimer'):
-                    print('The selected optimiser is not implemented. LBFG-S has been selected instead')
+                    print('The selected optimiser is not implemented. L-BFGS has been selected instead')
                     qmmm_dict[keys[i]][keys_[j]] = 'lbgfs'
 
                 elif keys_ == 'coordinates' and qmmm_dict[keys[i]][keys_[j]] not in ('hdlc', 'cartesian', 'dlc'):
@@ -60,7 +60,7 @@ def yaml2dict(default_file, user_file):
                 elif keys_ == 'tolerance' and (not isinstance(qmmm_dict[keys[i]][keys_[j]], float)):
                     print('The default value of 0.001 has been used as tolerance.')
                     qmmm_dict[keys[i]][keys_[j]] = 0.001
-                
+
                 #elif keys_ == 'microiterative' and str(qmmm_dict[keys[i]][keys_[j]]).lower() not in ('yes', 'no'):#, 'y', 'n', 'true', 'false'):
                 #    if str(qmmm_dict[keys[i]][keys_[j]]).lower() in ('y', 'true'):
                 #        qmmm_dict[keys[i]][keys_[j]] = 'yes'
@@ -74,18 +74,49 @@ def yaml2dict(default_file, user_file):
 
 
 
+def yaml2dict2(default_file, user_file):
+    """
+    DEXCRIPTION:
+        Function which creates a dictionary from the user-input YAML completing the not defined keyword with the default configuration from the default YAML.
+    TO-DO
+        - [ ] Create checker for inputs
+    """
+
+    qmmm_dict = yaml.safe_load(open(default_file))
+    user_dict = yaml.safe_load(open(user_file))
+
+
+
+    for key in list(qmmm_dict.keys()):
+        if key not in ('calculation_features', 'theory'):
+            try :
+                qmmm_dict[key] = user_dict[key]
+            except KeyError:
+                pass
+
+        else :
+            for key_ in list(qmmm_dict[key].keys()):
+                try :
+                    qmmm_dict[key][key_] = user_dict[key][key_]
+                except KeyError:
+                    pass
+
+
+
+    return qmmm_dict
+
 def theory(dict_):
     """
     Function for creating the theory section of the ChemShell input file.
     """
-    
+
     def coupling(dict_=dict_):
         # QM-MM coupling specification
         if dict_['theory']['qmmm_embedding'] == 'electrostatic':
             coupling = 'shift'
         elif dict_['theory']['qmmm_embedding'] == 'mechanical':
             coupling = 'mechanical'
-        
+
         return coupling
 
     def basis_spec(dict_=dict_):
@@ -101,7 +132,7 @@ def theory(dict_):
                 else :
                     print('The specified basis set does not exist. 6-31G(d) will be used instead')
                     basis_spec = '{ { 6-31g* * } }'
-        
+
         elif dict_['theory']['metal'] != None:
             if dict_['theory']['metal_basis'].lower() in basis_dict.keys():
                 if dict_['theory']['metal'].lower() in basis_dict[dict_['theory']['metal_basis'].lower()]:
@@ -122,7 +153,7 @@ def theory(dict_):
                     print('The specified basis set does not exist. 6-31G(d) will be used instead')
                     basis_spec = basis_spec + '{ 6-31g* * } }'
 
-        
+
         return basis_spec
 
     def scftype(dict_=dict_):
@@ -130,7 +161,7 @@ def theory(dict_):
             scftype = 'rhf'
         elif dict_['theory']['electronic_configuration'] == 'open':
             scftype = 'uhf'
-            
+
         return scftype
 
     def qm_region(dict_=dict_):
@@ -140,15 +171,15 @@ def theory(dict_):
             qm_region = 'set qm_region { '
             for i in range(len(dict_['theory']['qm_region'])):
                 qm_region = qm_region + dict_['theory']['qm_region'][i] + ' '
-            
+
             qm_region = qm_region + '}'
-        
+
         return qm_region
 
 
 
 
-    
+
     theory_string = '''        theory= hybrid : [ list \\
                             coupling=  %s \\
                             debug= no \\
@@ -165,7 +196,7 @@ def theory(dict_):
                                                     debug=no \\
                                                     scale14 = [ list [ expr 1 / 1.2 ] 0.5  ] \\
                                                     amber_prmtop_file=  %s ]]''' % (
-                                                        
+
     coupling(),
     qm_region(),
     dict_['theory']['software'],
@@ -179,7 +210,7 @@ def theory(dict_):
 
 
 
-        
+
     return theory_string
 
 
@@ -209,7 +240,7 @@ def header(dict_):
     return header_string
 
 def residues(dict_):
-    
+
     """
     DESCRIPTION:
         Function for creating the piece of code that creates a list of residues and the contained atoms. It is needed only when using HDLC coordinates.
@@ -227,18 +258,17 @@ def residues(dict_):
 def opt_min_calculation(dict_):
     """
     DESCRIPTION:
-        Function for creating the job to carry out. 
+        Function for creating the job to carry out.
     """
 
     if dict_['input_files']['coords_chemsh'] == None:
         coord_string = f"load_amber_coords inpcrd={dict_['input_files']['coordinates']} prmtop={dict_['input_files']['topology']} coords=coord.c\n\n"
         coords = 'coord.c'
-
     else :
         coord_string = ''
         coords = dict_['input_files']['coords_chemsh']
 
-    
+
     if dict_['calculation_features']['coordinates'].lower() == 'hdlc':
         residues_string = residues(dict_) + '\n\n'
         residues_option = 'residues= $pdbresidues \\\n'

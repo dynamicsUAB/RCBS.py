@@ -1,5 +1,5 @@
 name: test
-type: opt
+type: scan
 
 input_files:
   coordinates: hola.inpcrd

@@ -1,9 +1,8 @@
 from ..snippets.folders import check_folder
 
-structure_saver = lambda sel, file_name, format: sel.write(file_name + format)
 
 
-def trajectory_frame_extractor(u, frame, name='', folder='', format='.pdb'):
+def trajectory_frame_extractor(u, frame, name='', folder='', outformat='.pdb', solvent=True):
     """
     DESCRIPTION:
         Function for saving a frame from a trajectory loaded as a MDAnalysis Universe
@@ -22,10 +21,15 @@ def trajectory_frame_extractor(u, frame, name='', folder='', format='.pdb'):
 
     """
 
+    structure_saver = lambda sel, file_name, outformat: sel.write(file_name + outformat)
+
     if folder != '':
         check_folder(folder)
 
-    sel = u.select_atoms('all')
+    if solvent == True:
+        sel = u.select_atoms('all')
+    elif solvent == False:
+        sel = u.select_atoms('all and not (resname WAT or resname NA+ or resname Na+ or resname Cl- or resname CL-)')
 
     if isinstance(frame, list):
         f_ = 0
@@ -35,11 +39,11 @@ def trajectory_frame_extractor(u, frame, name='', folder='', format='.pdb'):
             sel = u.select_atoms('all')
 
             if name == '':
-                file_name = folder + str(f)
+                file_name = folder + '/' + str(f)
             else :
-                file_name = folder + name + '_' + str(f_)
+                file_name = folder + '/' + name + '_' + str(f_)
 
-            structure_saver(sel, file_name, format)
+            structure_saver(sel, file_name, outformat)
 
     if isinstance(frame, (str, int)):
         u.trajectory[int(frame)]

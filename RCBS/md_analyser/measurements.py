@@ -28,14 +28,16 @@ def dist_bool_output(dist, dist1, dist2=0, mode='lim'):
 
 def angle_bool_output(ang, ang1, ang2, mode='tol'):
     """
-    This function takes an input angle and the upper and lower limits or the central value and the tolerance and outputs
-    if it satisfies or not the given criteria.
-    All the input values are transformed into the (0, 360) degrees format.
-    The input values have to be in degrees, not in radians. They can be transformed using the np.rad2dreg() method, for example.
+    DESCRIPTION:
+        This function takes an input angle and the upper and lower limits or the central value and the tolerance and outputs
+        if it satisfies or not the given criteria.
+        All the input values are transformed into the (0, 360) degrees format.
+        The input values have to be in degrees, not in radians. They can be transformed using the np.rad2dreg() method, for example.
 
-    modes:
-        lim -> limit mode, it requires a max and a min value
-        tol -> tolerance mode, it requires a central value and a min and max value
+    OPTIONS:
+        - modes:
+            - lim -> limit mode, it requires a max and a min value
+            - tol -> tolerance mode, it requires a central value and a min and max value
     """
 
     ang, ang1, ang2 = list(map(lambda ang: ((ang + 360) % 360), [ang, ang1, ang2]))
@@ -57,37 +59,109 @@ def angle_bool_output(ang, ang1, ang2, mode='tol'):
 # DISTANCE, ANGLE AND DIHEDRAL ANGLES MEASURERS
 def dist_measure(sel1, sel2):
     """
+    DESCRIPTION:
         This function outputs the minimum measured distance between the two input selections.
     """
     from numpy import min as npmin
 
     return npmin(mdadist.distance_array(sel1.positions, sel2.positions, backend='OpenMP'))
 
-def dihe_measure(sel1, sel2, sel3, sel4):
+def dihe_measure(sel1, sel2, sel3, sel4, units='degree', domain=360):
     """
-    This functions measures the dihedral angle between 4 specified atoms and returns the dihedral value between 0 and 360 degrees.
-    The input selections have to be single atoms.
+    DESCRIPTION:
+        This functions measures the dihedral angle between 4 specified atoms and returns the dihedral value between 0 and 360 degrees.
+        The input selections have to be single atoms.
+
+    OPTIONS:
+        - units: option for selecting the output units of the dihedral
+            - degree
+            - rad
+
+        - domain: option for specifying the domain of the output measures
+            - 180, pi: option for -180,180 domain
+            - 360, 2pi: option for 0,360 domain. Default option
     """
-    from numpy import rad2deg
 
     for sel in (sel1, sel2, sel3, sel4):
         if len(sel) != 1:
             raise NotSingleAtomSelectionError
 
-    return ((float(rad2deg(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP')))) + 360) % 360
+    units = units.lower()
+    domain = str(domain).lower()
+
+    if units not in ('deg', 'degree', 'degrees', 'rad', 'radian', 'radians'):
+        units = 'degree'
+
+    if domain not in ('180', '360', 'pi', '2pi'):
+        domain = '360'
+
+
+    if units in ('rad', 'radian', 'radians'):
+        if domain in ('180', 'pi'):
+            dihedral = float(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP'))
+        elif domain in ('360', '2pi'):
+            from math import pi
+            dihedral = (float(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP')) + pi) % pi
+
+    elif units in ('deg', 'degree', 'degrees'):
+        from numpy import rad2deg
+
+        if domain in ('180', 'pi'):
+            dihedral = float(rad2deg(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP')))
+        elif domain in ('360', '2pi'):
+            from math import pi
+            dihedral = (float(rad2deg(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP'))) + 360) % 360
+
+    return dihedral
 
 def ang_measure(sel1, sel2, sel3):
     """
-    This functions measures the angle between 3 specified atoms and returns the value between 0 and 360 degrees.
-    The input selections have to be single atoms.
+    DESCRIPTION:
+        This functions measures the angle between 3 specified atoms and returns the value between 0 and 360 degrees.
+        The input selections have to be single atoms.
+
+    OPTIONS:
+        - units: option for selecting the output units of the dihedral
+            - degree
+            - rad
+
+        - domain: option for specifying the domain of the output measures
+            - 180, pi: option for -180,180 domain
+            - 360, 2pi: option for 0,360 domain. Default option
     """
-    from numpy import rad2deg
 
     for sel in (sel1, sel2, sel3):
         if len(sel) != 1:
             raise NotSingleAtomSelectionError
 
-    return ((float(rad2deg(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP')))) + 360) % 360
+
+    units = units.lower()
+    domain = str(domain).lower()
+
+    if units not in ('deg', 'degree', 'degrees', 'rad', 'radian', 'radians'):
+        units = 'degree'
+
+    if domain not in ('180', '360', 'pi', '2pi'):
+        domain = '360'
+
+
+    if units in ('rad', 'radian', 'radians'):
+        if domain in ('180', 'pi'):
+            angle = float(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP'))
+        elif domain in ('360', '2pi'):
+            from math import pi
+            angle = (float(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP')) + pi) % pi
+
+    elif units in ('deg', 'degree', 'degrees'):
+        from numpy import rad2deg
+
+        if domain in ('180', 'pi'):
+            angle = float(rad2deg(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP')))
+        elif domain in ('360', '2pi'):
+            from math import pi
+            angle = (float(rad2deg(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP'))) + 360) % 360
+
+    return angle
 
 
 ######################

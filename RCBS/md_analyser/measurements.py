@@ -99,29 +99,29 @@ def dihe_measure(sel1, sel2, sel3, sel4, units='degree', domain=360):
     if units not in ('deg', 'degree', 'degrees', 'rad', 'radian', 'radians'):
         units = 'degree'
 
-    if domain not in ('180', '360', 'pi', '2pi'):
+    if domain not in (180, 360, '180', '360', 'pi', '2pi'):
         domain = '360'
 
 
     if units in ('rad', 'radian', 'radians'):
-        if domain in ('180', 'pi'):
+        if domain in (180, '180', 'pi'):
             dihedral = float(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP'))
-        elif domain in ('360', '2pi'):
+        elif domain in (360, '360', '2pi'):
             from math import pi
             dihedral = (float(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP')) + pi) % pi
 
     elif units in ('deg', 'degree', 'degrees'):
         from numpy import rad2deg
 
-        if domain in ('180', 'pi'):
+        if domain in (180, '180', 'pi'):
             dihedral = float(rad2deg(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP')))
-        elif domain in ('360', '2pi'):
+        elif domain in (360, '360', '2pi'):
             from math import pi
             dihedral = (float(rad2deg(mdadist.calc_dihedrals(sel1.positions, sel2.positions, sel3.positions, sel4.positions, backend='OpenMP'))) + 360) % 360
 
     return dihedral
 
-def ang_measure(sel1, sel2, sel3):
+def ang_measure(sel1, sel2, sel3, units='deg', domain='180'):
     """
     DESCRIPTION:
         This functions measures the angle between 3 specified atoms and returns the value between 0 and 360 degrees.
@@ -149,23 +149,23 @@ def ang_measure(sel1, sel2, sel3):
     if units not in ('deg', 'degree', 'degrees', 'rad', 'radian', 'radians'):
         units = 'degree'
 
-    if domain not in ('180', '360', 'pi', '2pi'):
+    if domain not in (180, '180', 360, '360', 'pi', '2pi'):
         domain = '360'
 
 
     if units in ('rad', 'radian', 'radians'):
-        if domain in ('180', 'pi'):
+        if domain in (180, '180', 'pi'):
             angle = float(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP'))
-        elif domain in ('360', '2pi'):
+        elif domain in (360, '360', '2pi'):
             from math import pi
             angle = (float(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP')) + pi) % pi
 
     elif units in ('deg', 'degree', 'degrees'):
         from numpy import rad2deg
 
-        if domain in ('180', 'pi'):
+        if domain in (180, '180', 'pi'):
             angle = float(rad2deg(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP')))
-        elif domain in ('360', '2pi'):
+        elif domain in (360, '360', '2pi'):
             from math import pi
             angle = (float(rad2deg(mdadist.calc_angles(sel1.positions, sel2.positions, sel3.positions, backend='OpenMP'))) + 360) % 360
 

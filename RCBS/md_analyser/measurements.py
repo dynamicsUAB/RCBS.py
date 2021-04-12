@@ -1,6 +1,5 @@
-from ..exceptions import NotSingleAtomSelectionError
-
 from MDAnalysis import Universe
+from MDAnalysis.core.groups import AtomGroup
 import MDAnalysis.lib.distances as mdadist
 
 # BOOLEAN CHECKERS
@@ -60,11 +59,18 @@ def angle_bool_output(ang, ang1, ang2, mode='tol'):
 def dist_measure(sel1, sel2):
     """
     DESCRIPTION:
-        This function outputs the minimum measured distance between the two input selections.
+        This function outputs the minimum measured distance between the two input selections or coordinates or their combination.
     """
     from numpy import min as npmin
+    from numpy import array
 
-    return npmin(mdadist.distance_array(sel1.positions, sel2.positions, backend='OpenMP'))
+    if isinstance(sel1, AtomGroup):
+        sel1 = sel1.positions
+
+    if isinstance(sel2, AtomGroup):
+        sel2 = sel2.positions
+
+    return npmin(mdadist.distance_array(array(sel1), array(sel2), backend='OpenMP'))
 
 def dihe_measure(sel1, sel2, sel3, sel4, units='degree', domain=360):
     """
@@ -81,6 +87,7 @@ def dihe_measure(sel1, sel2, sel3, sel4, units='degree', domain=360):
             - 180, pi: option for -180,180 domain
             - 360, 2pi: option for 0,360 domain. Default option
     """
+    from ..exceptions import NotSingleAtomSelectionError
 
     for sel in (sel1, sel2, sel3, sel4):
         if len(sel) != 1:
@@ -129,6 +136,7 @@ def ang_measure(sel1, sel2, sel3):
             - 180, pi: option for -180,180 domain
             - 360, 2pi: option for 0,360 domain. Default option
     """
+    from ..exceptions import NotSingleAtomSelectionError
 
     for sel in (sel1, sel2, sel3):
         if len(sel) != 1:
@@ -239,10 +247,17 @@ def dist_plane(sel, plane1, plane2=None, plane3=None):
         and outputs the distance value and sign.
         #    There are two sets of inputs: the sel, which is the atom that will be measured and which can be input as
         #    a single atom selection, as a selection of multiple atoms or as a list of multiple selections; and the
-        #    plane1 (plane2, plane3), which are the three atoms that
+        #    plane1 (plane2, plane3), which are the three atoms that constitute the plane
         Input selection has to be a selection of the atoms to be measured, while plane atoms can be either a
         selection of 3 atoms or 3 selection of 1 atom.
         The output is a float value or a list of float values depending on the length of the input selection
+
+    TODO:
+        - [ ] Convert to input dist_atom_plane and change the input of atoms for building the plane to the plane equation
+        - [ ] Plane can be created with the create_plane function
+
+    OBSERVATIONS:
+        Results given by this function are not consistent with results shown by Chimera.
     """
 
     def plane_eq(plane1, plane2, plane3):
@@ -293,3 +308,129 @@ def dist_plane(sel, plane1, plane2=None, plane3=None):
 
 
     return distance(sel.position, plane_eq(plane1, plane2, plane3))
+
+
+def ang_planes(plane1, plane2, units='deg'):
+    """
+    DESCRIPTION:
+        Function for measuring the angle between two given planes.
+
+    OPTIONS:
+        - units: deg or rad output
+
+    INPUTS:
+        - plane1, plane2: general equation of the input planes
+    """
+
+    from math import sqrt, acos
+    from numpy import rad2deg
+
+    ang = acos((abs(plane1[0]*plane2[0] + plane1[1]*plane2[1] + plane1[2]*plane2[2]))/((sqrt(plane1[0]**2 + plane1[1]**2 +  plane1[2]**2))*(sqrt(plane2[0]**2 + plane2[1]**2 +  plane2[2]**2))))
+
+    if units.lower() in ('d', 'deg', 'degree', 'degrees'):
+        return rad2deg(ang)
+
+    if units.lower() in ('r', 'rad', 'radian', 'radians'):
+        return ang
+
+
+def create_plane(*sel, verbose=False, plot=False):
+    """
+    DESCRIPTION:
+        Function for computing the best fitting plane of several atoms (3 or more) and the centroid and the weighted centroid (by mass).
+        The output has three values:
+            - The plane equation in the general form (ax + by + cz + d = 0)
+            - The Center of Geometry (the centroid) (x, y, z)
+            - The Center of Mass (the weighted centroid) (x, y, z)
+
+    ARGUMENTS:
+        - sel: MDAnalysis selection(s) of atoms. Multiple selections or selection of multiple atoms or their combination are allowed. At least 3 are required for creating the plane. If not given, an error will be raised
+        - verbose: option for printing the fitting errors between atoms and the created plane
+        - plot: option for drawing the points (atoms) and the fitted plot in a 3D vision using matplotlib
+
+    SOURCE:
+        The code of this function comes from https://math.stackexchange.com/questions/99299/best-fitting-plane-given-a-set-of-point
+    """
+
+    from ..exceptions import NotEnoughAtomsSetectedError
+    from numpy import matrix
+    from numpy.linalg import norm
+
+    sel = sum(sel)
+
+    if len(sel) < 3:
+        raise NotEnoughAtomsSetectedError
+
+    elif len(sel) >= 3:
+        xs = sel.positions[:,0]
+        ys = sel.positions[:,1]
+        zs = sel.positions[:,2]
+
+        # do fit
+        A, b = [], []
+        for i in range(len(xs)):
+            A.append([xs[i], ys[i], 1])
+            b.append(zs[i])
+        b = matrix(b).T
+        A = matrix(A)
+
+        # Manual solution
+        fit = (A.T * A).I * A.T * b
+        errors = b - A * fit
+        residual = norm(errors)
+
+        fit = [float(fit[0]), float(fit[1]), 1, float(fit[2])]
+
+        cog = list(sel.center_of_geometry())
+        com = list(sel.center_of_mass())
+
+    if verbose == True:
+        print(f'The general form of the equation of the plane is: {round(fit[0], 3)}x + {round(fit[1], 3)}y + {round(fit[2], 3)}z + {round(fit[3], 3)} = 0')
+
+        if len(errors) > 1:
+           print('Fitting error is: ', errors)
+        else :
+            errors_str = ''
+            for e in errors[:-1]:
+                errors_str = errors_str + str(e) + ', '
+
+            errors_str = errors_str + str(e)
+
+            print('Fitting errors for each atom (in order) are: ', errors_str)
+
+    elif verbose == False:
+        pass
+
+    if plot == True:
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+
+        from numpy import meshgrid, arange, zeros
+
+        plt.figure()
+        ax = plt.subplot(111, projection='3d')
+        ax.scatter(xs, ys, zs, color='k')
+        ax.scatter(cog[0], cog[1], cog[2], color='b')
+        ax.scatter(com[0], com[1], com[2], color='r')
+
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        X,Y = meshgrid(arange(xlim[0], xlim[1]),
+                        arange(ylim[0], ylim[1]))
+        Z = zeros(X.shape)
+        for r in range(X.shape[0]):
+            for c in range(X.shape[1]):
+                Z[r,c] = fit[0] * X[r,c] + fit[1] * Y[r,c] + fit[3]
+        ax.plot_wireframe(X,Y,Z, color='k')
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        plt.show()
+
+    if plot == False:
+        pass
+
+    return fit, cog, com
+
+
